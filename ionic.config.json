@@ -1,0 +1,7 @@
+{
+  "name": "Elite-Schedule-Mobile",
+  "integrations": {
+    "cordova": {}
+  },
+  "type": "ionic-angular"
+}
