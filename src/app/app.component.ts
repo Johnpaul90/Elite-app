@@ -1,10 +1,13 @@
 import { Component, ViewChild } from '@angular/core';
-import { Nav, Platform } from 'ionic-angular';
+import { Nav, Platform, LoadingController } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
-
-import { HomePage } from '../pages/home/home';
-import { ListPage } from '../pages/list/list';
+import { MyTeamsPage } from '../pages/my-teams/my-teams';
+import { TournamentsPage } from '../pages/tournaments/tournaments';
+import { UserSettingsService } from '../providers/user-settings-service/user-settings-service';
+import { EliteService } from '../providers/elite-service/elite-service';
+import { TeamdetailPage } from '../pages/teamdetail/teamdetail';
+import { TeamHomePage } from '../pages/team-home/team-home';
 
 @Component({
   templateUrl: 'app.html'
@@ -12,18 +15,21 @@ import { ListPage } from '../pages/list/list';
 export class MyApp {
   @ViewChild(Nav) nav: Nav;
 
-  rootPage: any = HomePage;
+  rootPage: any = MyTeamsPage;
 
   pages: Array<{title: string, component: any}>;
-
-  constructor(public platform: Platform, public statusBar: StatusBar, public splashScreen: SplashScreen) {
+  favoriteTeams = [];
+  constructor(public platform: Platform,
+    private userSettingsService: UserSettingsService,
+    public statusBar: StatusBar,
+    public eliteService: EliteService,
+    private userSettingService: UserSettingsService,
+    private loadingController: LoadingController,
+    public splashScreen: SplashScreen) {
     this.initializeApp();
 
     // used for an example of ngFor and navigation
-    this.pages = [
-      { title: 'Home', component: HomePage },
-      { title: 'List', component: ListPage }
-    ];
+   ;
 
   }
 
@@ -32,7 +38,12 @@ export class MyApp {
       // Okay, so the platform is ready and our plugins are available.
       // Here you can do any higher level native things you might need.
       this.statusBar.styleDefault();
+      this.reFreshFavorites();
       this.splashScreen.hide();
+
+      this.userSettingService.initStorage().then(() => {
+        this.rootPage = MyTeamsPage;
+      })
     });
   }
 
@@ -41,4 +52,29 @@ export class MyApp {
     // we wouldn't want the back button to show in this scenario
     this.nav.setRoot(page.component);
   }
+
+  goHome() {
+    this.nav.push(MyTeamsPage);
+  }
+
+  gotoTournament() {
+    this.nav.push(TournamentsPage);
+  }
+
+  reFreshFavorites() {
+     this.favoriteTeams = this.userSettingsService.getAllFavorites();
+    //this.userSettingService.getAllFavorites().then(x => {
+    //  this.favoriteTeams = x;
+    //})
+  }
+
+  goToTeam(favorite) {
+    let loader = this.loadingController.create({
+      content: 'Getting data ...',
+      dismissOnPageChange: true
+    });
+    loader.present();
+    this.eliteService.getTournamentData(favorite.tournamentId).subscribe(l => this.nav.push(TeamHomePage, favorite.team))
+  }
+
 }
